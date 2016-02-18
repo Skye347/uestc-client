@@ -1,0 +1,14 @@
+html {
+  font-family: 'Roboto', sans-serif;
+  height: 100%;
+}
+
+body {
+  font-size: 13px;
+  line-height: 20px;
+  margin: 0px;
+  padding: 0px;
+  background-color: #FFF4A2;
+  height: 100%;
+  position: relative;
+}
