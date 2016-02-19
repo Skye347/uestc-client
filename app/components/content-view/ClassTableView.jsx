@@ -21,8 +21,8 @@ var NavigationExpandMoreIcon=require('material-ui/lib/svg-icons/navigation/expan
 var RaisedButton=require('material-ui/lib/raised-button');
 var ClearIcon=require('material-ui/lib/svg-icons/content/clear');
 var Slider=require('material-ui/lib/slider');
-var GoogleCalSync=require('../../../experiments/google-cal-sync/google-cal-sync.js').GoogleCalSync;
-var GoogleCalSyncMain=require('../../../experiments/google-cal-sync/google-cal-sync.js').main;
+var GoogleCalSyncView=require('../../../experiments/google-cal-sync/google-cal-sync.js').GoogleCalSyncView;
+var Dialog=require('material-ui/lib/dialog');
 
 class ClassTableView extends React.Component{
     constructor(){
@@ -33,11 +33,21 @@ class ClassTableView extends React.Component{
         this.handleCancel=this.handleCancel.bind(this);
         this.handleWeekChange=this.handleWeekChange.bind(this);
         this.setData=this.setData.bind(this);
-        this.handleSync=this.handleSync.bind(this);
+        this.handleDialogOpen=this.handleDialogOpen.bind(this);
+        this.handleDialogClose=this.handleDialogClose.bind(this);
         this.toolbarfix=-1;
         this.currentSemID=0;
         this.currentWek=1;
+        this.state={
+            DialogOpen:false,
+            prepareing:false
+        };
+        this.tmpStr=null;
+        this.tmpData=null;
     };
+    handleDialogClose(){
+        this.setState({DialogOpen:false});
+    }
     handleCellHover(index){
         if(this.toolbarfix==-1){
             document.getElementById('tb-cinfo').innerText=this.data[index][3]+","+this.data[index][5]+","+this.data[index][1]+","+this.data[index][7];
@@ -51,7 +61,7 @@ class ClassTableView extends React.Component{
     handleWeekChange(event,value){
         this.currentWek=value;
         this.setData(this.currentSemID);
-    }
+    };
     handleCellClick(index){
         this.toolbarfix=index;
     };
@@ -62,15 +72,17 @@ class ClassTableView extends React.Component{
     componentDidMount(){
         this.setData();
     };
-    async handleSync(){
+    async handleDialogOpen(){
         if(this.SemList==null) return;
-        // console.log(GoogleCalSync);
+        this.tmpData=[];
+        this.setState({DialogOpen:false,prepareing:true})
         for(var wek=1;wek<=20;wek++){
             console.log(wek);
             var dataTmp=await this.props.route.info.getInfo('ClassTable',[this.currentSemID,wek]);
             if(dataTmp[0]==1) return;
-            GoogleCalSyncMain(dataTmp[1],wek);
+            this.tmpData.push([dataTmp[1],wek]);
         }
+        this.setState({DialogOpen:true,prepareing:false});
     }
     async setData(id){
         this.toolbarfix=-1;
@@ -315,7 +327,11 @@ class ClassTableView extends React.Component{
                     </TableBody>
                     <TableFooter>
                         <div>
-                            <RaisedButton label="Default" onClick={this.handleSync} />
+                            <RaisedButton label="Default" onClick={this.handleDialogOpen} />
+                            {this.state.prepareing?'Preparing':''}
+                            <Dialog actions={[<RaisedButton label="Close" onClick={this.handleDialogClose}/>]} open={this.state.DialogOpen} onRequestClose={this.handleDialogClose}>
+                                <GoogleCalSyncView data={this.tmpData}></GoogleCalSyncView>
+                            </Dialog>
                         </div>
                     </TableFooter>
                 </Table>
