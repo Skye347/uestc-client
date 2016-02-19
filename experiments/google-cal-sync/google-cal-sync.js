@@ -4,48 +4,88 @@ var fs = require('fs');
 var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
+var React=require('react');
+var TextField=require('material-ui/lib/text-field');
+var RaisedButton=require('material-ui/lib/raised-button');
 require('date-utils');
 
-class GoogleCalSync{
+class GoogleCalSyncView extends React.Component{
     constructor(){
-        this.saveAuth=this.saveAuth.bind(this);
-        this.authPapre=this.authPapre.bind(this);
-        this.auth=null;
-        this.mainProcess=this.mainProcess.bind(this);
+        super();
+        this.handleAuthCode=this.handleAuthCode.bind(this);
+        this.handleSync=this.handleSync.bind(this);
+        this.state={
+            auth:false,
+            sync:false,
+            done:false,
+            error:false
+        }
     };
-    authPapre(callback){
-    };
-    saveAuth(auth){
-        this.auth=auth;
-    };
-    mainProcess(event){
-        if(this.auth==null){
-            return;
+    handleAuthCode(){
+        global.authCode=this.refs.AuthCode.getValue();
+        var view=this;
+        global.oauth2Client.getToken(global.authCode, function(err, token) {
+          if (err) {
+              view.setState({error:'Error while trying to retrieve access token'+err})
+              return;
+          }
+          global.oauth2Client.credentials = token;
+          global.Auth=global.oauth2Client;
+          view.setState({auth:true});
+        });
+    }
+    handleSync(){
+        this.setState({sync:true});
+        for(var i=0;i<this.props.data.length;i++){
+            //ClasstableSync(this.props.data[i][0],this.props.data[i][1]);
+        }
+        this.setState({done:true});
+    }
+    render(){
+        if(this.state.error){
+            return(
+                <div>
+                    {this.state.error}
+                </div>
+            )
+        }
+        if(!this.state.auth){
+            return(
+                <div>
+                    Authorize this app by visiting this url:{global.authUrl}
+                    <TextField ref='AuthCode' hintText='AuthCode:'></TextField>
+                    <RaisedButton label='Next' onClick={this.handleAuthCode}/>
+                </div>
+            )
+        }
+        else if(!this.state.sync){
+            return(
+                <div>
+                    Click to sync your ClassTable
+                    <RaisedButton label='Next' onClick={this.handleSync}/>
+                </div>
+            )
+        }
+        else if(!this.state.done){
+            return(
+                <div>
+                    Syncing
+                </div>
+            )
         }
         else{
-            google.options({ proxy: 'http://127.0.0.1:8118'});
-            var calendar = google.calendar('v3');
-            calendar.events.insert({
-              auth: this.auth,
-              calendarId: 'primary',
-              resource: event,
-            }, function(err, event) {
-              if (err) {
-                console.log('There was an error contacting the Calendar service: ' + err);
-                return;
-              }
-              console.log('Event created: %s', event.htmlLink);
-            });
+            return(
+                <div>
+                    Done!
+                </div>
+            )
         }
-    }
+    };
 }
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/calendar-nodejs-quickstart.json
 var SCOPES = ['https://www.googleapis.com/auth/calendar'];
-var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -59,147 +99,19 @@ function authorize(credentials, callback) {
   var clientId = credentials.installed.client_id;
   var redirectUrl = credentials.installed.redirect_uris[0];
   var auth = new googleAuth();
-  var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
-
-  // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, function(err, token) {
-    if (err) {
-      getNewToken(oauth2Client, callback);
-    } else {
-      oauth2Client.credentials = JSON.parse(token);
-      callback(oauth2Client);
-    }
-  });
+  global.oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+  saveAuthUrl(global.oauth2Client);
 }
 
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- *
- * @param {google.auth.OAuth2} oauth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback to call with the authorized
- *     client.
- */
-function getNewToken(oauth2Client, callback) {
+function saveAuthUrl(oauth2Client) {
   var authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES
   });
-  console.log('Authorize this app by visiting this url: ', authUrl);
-  var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  rl.question('Enter the code from that page here: ', function(code) {
-    rl.close();
-    oauth2Client.getToken(code, function(err, token) {
-      if (err) {
-        console.log('Error while trying to retrieve access token', err);
-        return;
-      }
-      oauth2Client.credentials = token;
-      storeToken(token);
-      callback(oauth2Client);
-    });
-  });
+  global.authUrl=authUrl;
 }
 
-/**
- * Store token to disk be used in later program executions.
- *
- * @param {Object} token The token to store to disk.
- */
-function storeToken(token) {
-  try {
-    fs.mkdirSync(TOKEN_DIR);
-  } catch (err) {
-    if (err.code != 'EEXIST') {
-      throw err;
-    }
-  }
-  fs.writeFile(TOKEN_PATH, JSON.stringify(token));
-  console.log('Token stored to ' + TOKEN_PATH);
-}
-
-/**
- * Lists the next 10 events on the user's primary calendar.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function listEvents(auth) {
-    if(auth==null){
-        console.log(null);
-        return;
-    }
-    else{
-        console.log(auth);
-    }
-    google.options({ proxy: 'http://127.0.0.1:8118',auth:auth});
-    var calendar = google.calendar('v3');
-    var event = {
-  'summary': 'Google Calendar Test',
-  'location': '800 Howard St., San Francisco, CA 94103',
-  'start': {
-    'dateTime': '2016-02-28T09:00:00',
-    'timeZone': 'Asia/Shanghai'
-  },
-  'end': {
-    'dateTime': '2016-02-28T17:00:00',
-    'timeZone': 'Asia/Shanghai'
-  },
-  'recurrence': [
-    'RRULE:FREQ=DAILY;COUNT=2'
-  ],
-  'attendees': [
-    {'email': 'lpage@example.com'},
-    {'email': 'sbrin@example.com'},
-  ],
-  'reminders': {
-    'useDefault': false,
-    'overrides': [
-      {'method': 'email', 'minutes': 24 * 60},
-      {'method': 'popup', 'minutes': 10},
-    ],
-  },
-};
-
-calendar.events.insert({
-  auth: auth,
-  calendarId: 'primary',
-  resource: event,
-}, function(err, event) {
-  if (err) {
-    console.log('There was an error contacting the Calendar service: ' + err);
-    return;
-  }
-  console.log('Event created: %s', event.htmlLink);
-});
-  // calendar.events.list({
-  //   calendarId: 'primary',
-  //   timeMin: (new Date()).toISOString(),
-  //   maxResults: 10,
-  //   singleEvents: true,
-  //   orderBy: 'startTime'
-  // }, function(err, response) {
-  //   if (err) {
-  //     console.log('The API returned an error: ' + err);
-  //     return;
-  //   }
-  //   var events = response.items;
-  //   if (events.length == 0) {
-  //     console.log('No upcoming events found.');
-  //   } else {
-  //     console.log('Upcoming 10 events:');
-  //     for (var i = 0; i < events.length; i++) {
-  //       var event = events[i];
-  //       var start = event.start.dateTime || event.start.date;
-  //       console.log('%s - %s', start, event.summary);
-  //     }
-  //   }
-  // });
-}
-
-function mainProcess(event){
+function ClasstableSyncMain(event){
     if(global.Auth==null){
         return;
     }
@@ -225,6 +137,9 @@ function mainProcess(event){
     }
 }
 
+global.authCode=null;
+global.oauth2Client=null;
+global.authUrl=null;
 global.Auth=null;
 var timeList={
     0:['08:30','09:15'],
@@ -249,11 +164,9 @@ fs.readFile(__dirname+'/client_secret_164402223173-692hnnmav0lv58ms3jgbccd5tmcs7
     console.log('Error loading client secret file: ' + err);
     return;
   }
-  authorize(JSON.parse(content), function(auth){
-      global.Auth=auth;
-  });
+  authorize(JSON.parse(content));
 });
-function main(weekData,week){
+function ClasstableSync(weekData,week){
     var i=0;
     function loop(){
         setTimeout(function(){
@@ -286,7 +199,7 @@ function main(weekData,week){
                 console.log(err);
                 console.log(weekData);
             }
-            setTimeout(mainProcess,10000,event);
+            setTimeout(ClasstableSyncMain,10000,event);
             i++;
             if(i<weekData.length){
                 loop();
@@ -296,5 +209,4 @@ function main(weekData,week){
     loop();
 }
 
-module.exports.main=main;
-module.exports.GoogleCalSync=GoogleCalSync;
+module.exports.GoogleCalSyncView=GoogleCalSyncView;
