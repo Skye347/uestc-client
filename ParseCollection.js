@@ -57,36 +57,47 @@ function ParseClassTable(body){
         if(script==""){
             throw "relogin";
         }
-        var ret=new Array();
-        var matchResultS1=script.match(/TaskActivity\(.+\)([\s\S]*?)new/g);
-        for (var x in matchResultS1){//table data
-            var matchResultTmp=matchResultS1[x].match(/".*?"/g);
-            for (var y in matchResultTmp){
-                matchResultTmp[y]=matchResultTmp[y].replace(/"/g,'').replace(/'/g,"");
-            }
-            matchResultTmp[2]=matchResultTmp[2].replace(/\(\S+\)/g,'');
-            matchResultTmp.push(matchResultTmp[3].match(/\(\S+\)/g)[0].replace('(','').replace(')',""));
-            matchResultTmp[3]=matchResultTmp[3].replace(/\(\S+\)/g,'');
-            var matchTimeTmp=matchResultS1[x].match(/\d\*unitCount\+\d{1,2}/g);//time
-            for (var j in matchTimeTmp){
-                var timeTmp=matchTimeTmp[j].match(/\d{1,2}/g);
-                timeTmp[0]=parseInt(timeTmp[0]);
-                timeTmp[1]=parseInt(timeTmp[1]);
-                matchTimeTmp[j]=timeTmp;
-            }
-            matchResultTmp.push(matchTimeTmp);
-            ret.push(matchResultTmp);
-        }
-        var retData=[];
-        retData[0]=0;
-        retData[1]=ret;
-        return retData;
-    }catch(err){
+    }
+    catch(err){
         var retData=[];
         retData[0]=1;
         retData[1]=null;
         return retData;
     }
+    var ret=new Array();
+    var test=script.match(/TaskActivity\(.+\)([\s\S]*?)table0.marshalTable/g);
+    var testS=null;
+    for(var x in test){
+        testS=test[x];
+        break;
+    }
+    var matchResultS1=JSON.stringify(testS).split('new');
+    if(matchResultS1[0]=='null'){
+        return [0,null];
+    }
+    for (var x in matchResultS1){//table data
+        var matchResultTmp=matchResultS1[x].match(/\\".*?\\"/g);
+        for (var y in matchResultTmp){
+            matchResultTmp[y]=matchResultTmp[y].replace(/\\"/g,'').replace(/'/g,"");
+        }
+        matchResultTmp[2]=matchResultTmp[2].replace(/\(\S+\)/g,'');
+        matchResultTmp.push(matchResultTmp[3].match(/\(\S+\)/g)[0].replace('(','').replace(')',""));
+        matchResultTmp[3]=matchResultTmp[3].replace(/\(\S+\)/g,'');
+        var matchTimeTmp=matchResultS1[x].match(/\d\*unitCount\+\d{1,2}/g);//time
+        for (var j in matchTimeTmp){
+            var timeTmp=matchTimeTmp[j].match(/\d{1,2}/g);
+            timeTmp[0]=parseInt(timeTmp[0]);
+            timeTmp[1]=parseInt(timeTmp[1]);
+            matchTimeTmp[j]=timeTmp;
+        }
+        matchResultTmp.push(matchTimeTmp);
+        matchResultTmp[6]=matchResultTmp[6].split('');
+        ret.push(matchResultTmp);
+    }
+    var retData=[];
+    retData[0]=0;
+    retData[1]=ret;
+    return retData;
 }
 
 function ParsePublicQuery(body){

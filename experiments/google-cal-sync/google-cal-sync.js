@@ -37,7 +37,7 @@ class GoogleCalSyncView extends React.Component{
     handleSync(){
         this.setState({sync:true});
         for(var i=0;i<this.props.data.length;i++){
-            //ClasstableSync(this.props.data[i][0],this.props.data[i][1]);
+            ClasstableSync(this.props.data[i][0],this.props.data[i][1]);
         }
         this.setState({done:true});
     }
@@ -119,6 +119,7 @@ function ClasstableSyncMain(event){
         return;
     }
     else{
+        var rawevent=event;
         console.log('inserting');
         google.options({ proxy: 'http://127.0.0.1:8118'});
         var calendar = google.calendar('v3');
@@ -129,7 +130,7 @@ function ClasstableSyncMain(event){
         }, function(err, event) {
           if (err) {
             console.log('There was an error contacting the Calendar service: ' + err);
-            console.log(event);
+            console.log(rawevent);
             return;
           }
           console.log('insert success');
@@ -171,35 +172,37 @@ function ClasstableSync(weekData,week){
     function loop(){
         setTimeout(function(){
             if(weekData==[]) return;
-            try{
-                var start=d.clone().addDays((week-1)*7+weekData[i][8][0][0]).toFormat('YYYY-MM-DD')+'T';
-                start+=timeList[weekData[i][8][0][1]][0]+':00';
-                var end=d.clone().addDays((week-1)*7+weekData[i][8][0][0]).toFormat('YYYY-MM-DD')+'T';
-                end+=timeList[weekData[i][8][weekData[i][8].length-1][1]][1]+':00';
-                var event = {
-                    'summary': weekData[i][3],
-                    'location': weekData[i][5],
-                    'description': '['+weekData[i][7]+']'+weekData[i][1],
-                    'start': {
-                        'dateTime': start,
-                        'timeZone': 'Asia/Shanghai'
-                    },
-                    'end': {
-                        'dateTime': end,
-                        'timeZone': 'Asia/Shanghai'
-                    },
-                    'reminders': {
-                        'useDefault': false,
-                        'overrides': [
-                            {'method': 'popup', 'minutes': 30},
-                        ],
-                    },
-                };
-            }catch(err){
-                console.log(err);
-                console.log(weekData);
+            if(weekData[i][6][week]=='1'){
+                try{
+                    var start=d.clone().addDays((week-1)*7+weekData[i][8][0][0]).toFormat('YYYY-MM-DD')+'T';
+                    start+=timeList[weekData[i][8][0][1]][0]+':00';
+                    var end=d.clone().addDays((week-1)*7+weekData[i][8][0][0]).toFormat('YYYY-MM-DD')+'T';
+                    end+=timeList[weekData[i][8][weekData[i][8].length-1][1]][1]+':00';
+                    var event = {
+                        'summary': weekData[i][3],
+                        'location': weekData[i][5],
+                        'description': '['+weekData[i][7]+']'+weekData[i][1],
+                        'start': {
+                            'dateTime': start,
+                            'timeZone': 'Asia/Shanghai'
+                        },
+                        'end': {
+                            'dateTime': end,
+                            'timeZone': 'Asia/Shanghai'
+                        },
+                        'reminders': {
+                            'useDefault': false,
+                            'overrides': [
+                                {'method': 'popup', 'minutes': 30},
+                            ],
+                        },
+                    };
+                    setTimeout(ClasstableSyncMain,10000,event);
+                }catch(err){
+                    console.log(err);
+                    console.log(weekData);
+                }
             }
-            setTimeout(ClasstableSyncMain,10000,event);
             i++;
             if(i<weekData.length){
                 loop();

@@ -50,7 +50,7 @@ class ClassTableView extends React.Component{
     }
     handleCellHover(index){
         if(this.toolbarfix==-1){
-            document.getElementById('tb-cinfo').innerText=this.data[index][3]+","+this.data[index][5]+","+this.data[index][1]+","+this.data[index][7];
+            document.getElementById('tb-cinfo').innerText="第"+this.currentWek+"周:"+this.data[index][3]+","+this.data[index][5]+","+this.data[index][1]+","+this.data[index][7];
         }
     };
     handleCellHoverExit(index){
@@ -120,6 +120,9 @@ class ClassTableView extends React.Component{
             }
         }
         for(var i in this.data){
+            if(this.data[i][6][this.currentWek]=='0'){
+                continue;
+            }
             var className=this.data[i][3];
             var classLocation=this.data[i][5];
             var time=this.data[i][8];
