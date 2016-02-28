@@ -117,7 +117,10 @@ function ParsePublicQuery(body){
     }catch(err){
         var retData=[];
         retData[0]=1;
-        retData[1]=null;
+        retData[1]={
+            QueryParams:null,
+            QueryList:null
+        };
         return retData;
     }
 }

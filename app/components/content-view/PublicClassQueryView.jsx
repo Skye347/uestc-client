@@ -66,7 +66,7 @@ class PublicClassQueryView extends React.Component{
                 return;
             }
         }
-        var tmp=await this.props.route.info.getInfo('PublicQuery',{
+        var tmp=await this.props.route.info.getInfo('PublicQuery',[{
             lessonProjID:1,
             lessonNo:'',
             lessonName:'',
@@ -85,7 +85,7 @@ class PublicClassQueryView extends React.Component{
             examTypeID:'...',
             lessonSemesterID:'undefined',
             pageNo:1
-        });
+        },84]);
         if(tmp[0]==1){
             this.props.route.info.reloginflag=true;
             this._reactInternalInstance._context.history.push('/login');

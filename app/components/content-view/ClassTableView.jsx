@@ -23,6 +23,8 @@ var ClearIcon=require('material-ui/lib/svg-icons/content/clear');
 var Slider=require('material-ui/lib/slider');
 var GoogleCalSyncView=require('../../../experiments/google-cal-sync/google-cal-sync.js').GoogleCalSyncView;
 var Dialog=require('material-ui/lib/dialog');
+var ArrowForwardIcon=require('material-ui/lib/svg-icons/navigation/arrow-forward');
+var DetailsView=require('../../../app/components/details.jsx');
 
 class ClassTableView extends React.Component{
     constructor(){
@@ -35,19 +37,25 @@ class ClassTableView extends React.Component{
         this.setData=this.setData.bind(this);
         this.handleDialogOpen=this.handleDialogOpen.bind(this);
         this.handleDialogClose=this.handleDialogClose.bind(this);
+        this.handleDetailsClose=this.handleDetailsClose.bind(this);
         this.toolbarfix=-1;
         this.currentSemID=0;
         this.currentWek=1;
         this.state={
             DialogOpen:false,
-            prepareing:false
+            prepareing:false,
+            details:false
         };
         this.tmpStr=null;
         this.tmpData=null;
+        this.handleDetails=this.handleDetails.bind(this);
+    };
+    handleDetails(){
+        this.setState({details:true})
     };
     handleDialogClose(){
         this.setState({DialogOpen:false});
-    }
+    };
     handleCellHover(index){
         if(this.toolbarfix==-1){
             document.getElementById('tb-cinfo').innerText=this.data[index][3]+","+this.data[index][5]+","+this.data[index][1]+","+this.data[index][7];
@@ -77,7 +85,7 @@ class ClassTableView extends React.Component{
         this.tmpData=[];
         this.setState({DialogOpen:false,prepareing:true})
         for(var wek=1;wek<=20;wek++){
-            console.log(wek);
+            // console.log(wek);
             var dataTmp=await this.props.route.info.getInfo('ClassTable',[this.currentSemID,wek]);
             if(dataTmp[0]==1) return;
             this.tmpData.push([dataTmp[1],wek]);
@@ -142,6 +150,9 @@ class ClassTableView extends React.Component{
 
         this.forceUpdate();
     };
+    handleDetailsClose(){
+        this.setState({details:false});
+    }
     handleCancel(){
         this.toolbarfix=-1;
         document.getElementById('tb-cinfo').innerText="Class infomation";
@@ -171,6 +182,12 @@ class ClassTableView extends React.Component{
                 label="Select";
             }
         }
+        if(this.toolbarfix!=-1){
+            var classid=this.data[this.toolbarfix][7];
+        }
+        else{
+            var classid=null;
+        }
         return(
             <div id='tc' style={{overflow:'auto',height:'100%'}}>
                 <Toolbar>
@@ -178,6 +195,9 @@ class ClassTableView extends React.Component{
                         <ToolbarTitle id="tb-cinfo" style={{marginLeft:10}} text="Class infomation" />
                     </ToolbarGroup>
                     <ToolbarGroup float="right">
+                        <IconButton id="go-details" style={{position:'absolute',marginLeft:-90,marginTop:4}} onClick={this.handleDetails}>
+                            <ArrowForwardIcon hidden={true} />
+                        </IconButton>
                         <IconButton id="cancel-b" style={{position:'absolute',marginLeft:-50,marginTop:4}} onClick={this.handleCancel}>
                             <ClearIcon hidden={true} />
                         </IconButton>
@@ -331,6 +351,9 @@ class ClassTableView extends React.Component{
                             {this.state.prepareing?'Preparing':''}
                             <Dialog actions={[<RaisedButton label="Close" onClick={this.handleDialogClose}/>]} open={this.state.DialogOpen} onRequestClose={this.handleDialogClose}>
                                 <GoogleCalSyncView data={this.tmpData}></GoogleCalSyncView>
+                            </Dialog>
+                            <Dialog open={this.state.details} onRequestClose={this.handleDetailsClose}>
+                                <DetailsView info={this.props.route.info} classid={classid} semester={this.currentSemID}></DetailsView>
                             </Dialog>
                         </div>
                     </TableFooter>

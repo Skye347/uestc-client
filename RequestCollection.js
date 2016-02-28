@@ -185,13 +185,18 @@ function GetClassTable(SemID,StartWek){
 //     lessonSemesterID:'undefined',
 //     pageNo:1
 // });
-function PublicClassQuery(QueryParams){
+function PublicClassQuery(QueryParamsList){
     return new Promise((resolve,reject)=>{
         var j = request.jar();
         for (var index in global.cookies) {
             var cookie=global.cookies[index];
+            if(cookie.name=='semester.id'){
+                j._jar.setCookieSync(request.cookie(cookie.name+"="+QueryParamsList[1]),"http://"+cookie.domain);
+                continue;
+            }
             j._jar.setCookieSync(request.cookie(cookie.name+"="+cookie.value),"http://"+cookie.domain);
         }
+        var QueryParams=QueryParamsList[0];
         var s0={
             url:'http://eams.uestc.edu.cn/eams/publicSearch!search.action',
             headers:{
@@ -237,7 +242,7 @@ function PublicClassQuery(QueryParams){
                 }
                 else{
                     var result=ParsePublicQuery(response.body);
-                    result.QueryParams=QueryParams;
+                    result[1].QueryParams=QueryParams;
                     resolve(result);
                 }
             }
