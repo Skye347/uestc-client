@@ -12,7 +12,10 @@
     "google-auth-library": "^0.9.7",
     "googleapis": "^2.1.7",
     "react": "^0.14.3",
-    "react-dom": "^0.14.3"
+    "react-dom": "^0.14.3",
+    "cheerio": "*",
+    "iconv-lite": "*",
+    "request": "*"
   },
   "scripts" : {
     "start" : "electron ."  
