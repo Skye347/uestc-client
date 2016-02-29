@@ -22,7 +22,6 @@ var PublicClassQueryView=require('../app/components/content-view/PublicClassQuer
 // var Router = require('react-router').Router
 // var Route = require('react-router').Route
 // var Link = require('react-router').Link
-
 injectTapEventPlugin();
 
 var InfoClientInsts=new InfoClient();
@@ -53,8 +52,12 @@ ReactDOM.render(
         <Route path="/profile" info={InfoClientInsts} set={SettingsInsts} component={ProfileView}>
         </Route>
         <Route path="/actions" component={PlainPaper}>
-            <Route path="classtable" info={InfoClientInsts} set={SettingsInsts} component={ClassTableView} />
-            <Route path="publicquery" info={InfoClientInsts} set={SettingsInsts} component={PublicClassQueryView} />
+            <Route path="classtable" info={InfoClientInsts} set={SettingsInsts} component={ClassTableView}>
+                <Route path=":params" info={InfoClientInsts} set={SettingsInsts} component={ClassTableView}/>
+            </Route>
+            <Route path="publicquery" info={InfoClientInsts} set={SettingsInsts} component={PublicClassQueryView}>
+                <Route path=":params" info={InfoClientInsts} set={SettingsInsts} component={PublicClassQueryView}/>
+            </Route>
         </Route>
         <Redirect from="/logged" to="/profile" />
     </Router>,

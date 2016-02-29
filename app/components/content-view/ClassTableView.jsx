@@ -67,17 +67,29 @@ class ClassTableView extends React.Component{
     };
     handleSemChange(event, index, value){
         this.currentSemID=value;
-        this.setData(value);
+        this._reactInternalInstance._context.history.push('/actions/classtable/'+JSON.stringify({semid:this.currentSemID}));
+        //this.setData(value);
+        this.forceUpdate();
+    };
+    componentWillMount(){
+        if(this.props.params.params!=null){
+            this.currentSemID=JSON.parse(this.props.params.params).semid;
+        }
     };
     componentDidMount(){
-        this.setData();
+        this.setData().then(()=>{
+            this.forceUpdate();
+        });
     };
+    componentDidUpdate(){
+        this.setData(this.currentSemID);
+    }
     async handleDialogOpen(){
         if(this.SemList==null) return;
         this.tmpData=[];
         this.setState({DialogOpen:false,prepareing:true})
         for(var wek=1;wek<=20;wek++){
-            console.log(wek);
+            // console.log(wek);
             var dataTmp=await this.props.route.info.getInfo('ClassTable',[this.currentSemID,wek]);
             if(dataTmp[0]==1) return;
             this.tmpData.push([dataTmp[1],wek]);
@@ -90,17 +102,12 @@ class ClassTableView extends React.Component{
             var result=await this.props.route.info.getInfo('SemList');
             if(result[0]==0){
                 this.SemList=result[1];
-                id=this.SemList[0][0];
-                this.currentSemID=id;
             }
             else if(result[0]==1){
                 this.props.route.info.reloginflag=true;
                 this._reactInternalInstance._context.history.push('/login');
                 return;
             }
-        }
-        else{
-            this.currentSemID=id;
         }
         var dataTmp=await this.props.route.info.getInfo('ClassTable',[this.currentSemID,this.currentWek]);
         if(dataTmp[0]==1){
@@ -142,8 +149,6 @@ class ClassTableView extends React.Component{
                 tmp.onmouseout=this.handleCellHoverExit.bind(this,i);
             }
         };
-
-        this.forceUpdate();
     };
     handleCancel(){
         this.toolbarfix=-1;
