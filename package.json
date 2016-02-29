@@ -15,7 +15,11 @@
     "react-dom": "^0.14.3",
     "cheerio": "*",
     "iconv-lite": "*",
-    "request": "*"
+    "request": "*",
+    "react-router": "*",
+    "react-tap-event-plugin": "*",
+    "material-ui": "*",
+    "date-utils": "*"
   },
   "scripts" : {
     "start" : "electron ."  
